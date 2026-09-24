@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, StringConstraints
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, StringConstraints, field_validator
 
 from app.models.user import UserRole
 
@@ -18,6 +18,24 @@ class UserBase(BaseModel):
 
 class UserCreate(UserBase):
     pass
+
+
+class UserUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    first_name: Name | None = None
+    last_name: Name | None = None
+    email: EmailStr | None = Field(default=None, max_length=254)
+    role: UserRole | None = None
+    is_active: bool | None = None
+
+    @field_validator("*")
+    @classmethod
+    def reject_null(cls, value):
+        # Fields may be omitted, but database columns cannot be set to NULL.
+        if value is None:
+            raise ValueError("Field must not be null")
+        return value
 
 
 class UserRead(UserBase):
