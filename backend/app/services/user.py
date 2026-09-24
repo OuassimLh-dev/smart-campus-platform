@@ -41,9 +41,11 @@ def _save(db: Session, user: User) -> User:
     return user
 
 
-def create_user(db: Session, payload: UserCreate) -> User:
+def create_user(
+    db: Session, payload: UserCreate, *, hashed_password: str | None = None
+) -> User:
     _ensure_email_available(db, str(payload.email))
-    user = User(**payload.model_dump())
+    user = User(**payload.model_dump(), hashed_password=hashed_password)
     db.add(user)
     return _save(db, user)
 
