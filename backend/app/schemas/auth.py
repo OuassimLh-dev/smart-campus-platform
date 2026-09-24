@@ -13,7 +13,8 @@ class RegisterRequest(BaseModel):
     last_name: Name
     email: EmailStr = Field(max_length=254)
     password: SecretStr = Field(min_length=8, max_length=128)
-    role: UserRole
+    # Public registration must never grant privileged roles.
+    role: Literal[UserRole.STUDENT] = UserRole.STUDENT
 
 
 class LoginRequest(BaseModel):

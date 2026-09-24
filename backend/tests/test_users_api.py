@@ -5,6 +5,11 @@ from app.models.user import User
 URL = "/api/v1/users"
 
 
+@pytest.fixture(autouse=True)
+def authenticate_admin(client, admin_headers):
+    client.headers.update(admin_headers)
+
+
 def user_payload(**overrides):
     return {
         "first_name": "Ada", "last_name": "Lovelace",
@@ -32,25 +37,26 @@ def test_duplicate_email(client):
     create_user(client)
     response = client.post(URL, json=user_payload())
     assert response.status_code == 409
-    assert len(client.get(URL).json()) == 1
+    assert len(client.get(URL).json()) == 2
     create_user(client, email="another@example.com")
 
 
 def test_list_users(client):
-    assert client.get(URL).json() == []
+    initial_users = client.get(URL).json()
     first = create_user(client)
     second = create_user(client, email="grace@example.com")
     response = client.get(URL)
     assert response.status_code == 200
-    assert response.json() == [first, second]
+    assert response.json() == initial_users + [first, second]
 
 
 def test_pagination(client):
-    users = [create_user(client, email=f"user{i}@example.com") for i in range(22)]
+    users = client.get(URL).json()
+    users += [create_user(client, email=f"user{i}@example.com") for i in range(22)]
     assert client.get(URL).json() == users[:20]
     assert client.get(URL, params={"skip": 2, "limit": 3}).json() == users[2:5]
     assert client.get(URL, params={"limit": 100}).json() == users
-    assert client.get(URL, params={"skip": 22}).json() == []
+    assert client.get(URL, params={"skip": len(users)}).json() == []
 
 
 @pytest.mark.parametrize("params", [{"skip": -1}, {"limit": 0}, {"limit": 101}])
@@ -115,7 +121,7 @@ def test_soft_delete(client, db_session):
     assert stored is not None
     assert stored.is_active is False
     assert client.get(path).json()["is_active"] is False
-    assert len(client.get(URL).json()) == 1
+    assert len(client.get(URL).json()) == 2
     assert client.delete(path).status_code == 200
     assert client.post(URL, json=user_payload()).status_code == 409
 

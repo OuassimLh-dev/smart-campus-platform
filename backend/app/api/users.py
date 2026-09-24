@@ -3,6 +3,10 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
+from app.api.authorization import (
+    authorize_user_update, require_admin, require_self_or_admin,
+)
+
 from app.db.session import get_db
 from app.models.user import User
 from app.schemas.user import UserCreate, UserRead, UserUpdate
@@ -22,7 +26,8 @@ def require_user(user_id: int, db: DatabaseSession) -> User:
 ExistingUser = Annotated[User, Depends(require_user)]
 
 
-@router.post("", response_model=UserRead, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=UserRead, status_code=status.HTTP_201_CREATED,
+             dependencies=[Depends(require_admin)])
 def create_user(payload: UserCreate, db: DatabaseSession) -> User:
     try:
         return user_service.create_user(db, payload)
@@ -30,7 +35,7 @@ def create_user(payload: UserCreate, db: DatabaseSession) -> User:
         raise HTTPException(status_code=409, detail="Email already exists") from exc
 
 
-@router.get("", response_model=list[UserRead])
+@router.get("", response_model=list[UserRead], dependencies=[Depends(require_admin)])
 def list_users(
     db: DatabaseSession,
     skip: Annotated[int, Query(ge=0)] = 0,
@@ -39,19 +44,24 @@ def list_users(
     return user_service.list_users(db, skip, limit)
 
 
-@router.get("/{user_id}", response_model=UserRead)
+@router.get("/{user_id}", response_model=UserRead,
+            dependencies=[Depends(require_self_or_admin)])
 def get_user(user: ExistingUser) -> User:
     return user
 
 
-@router.patch("/{user_id}", response_model=UserRead)
-def update_user(payload: UserUpdate, user: ExistingUser, db: DatabaseSession) -> User:
+@router.patch("/{user_id}", response_model=UserRead,
+              dependencies=[Depends(require_self_or_admin)])
+def update_user(
+    payload: Annotated[UserUpdate, Depends(authorize_user_update)],
+    user: ExistingUser, db: DatabaseSession,
+) -> User:
     try:
         return user_service.update_user(db, user, payload)
     except user_service.DuplicateEmailError as exc:
         raise HTTPException(status_code=409, detail="Email already exists") from exc
 
 
-@router.delete("/{user_id}", response_model=UserRead)
+@router.delete("/{user_id}", response_model=UserRead, dependencies=[Depends(require_admin)])
 def delete_user(user: ExistingUser, db: DatabaseSession) -> User:
     return user_service.delete_user(db, user)

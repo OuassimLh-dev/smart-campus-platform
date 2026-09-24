@@ -1,3 +1,5 @@
+from uuid import uuid4
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
@@ -6,9 +8,11 @@ from sqlalchemy.pool import StaticPool
 
 from app.db.base import Base
 from app.core.config import Settings, get_settings
+from app.core.security import create_access_token
 from app.db.session import get_db
 from app.main import app
 from app.models import User  # noqa: F401 -- register model metadata
+from app.models.user import UserRole
 
 
 @pytest.fixture
@@ -50,3 +54,21 @@ def client(db_session, auth_settings):
     finally:
         del app.dependency_overrides[get_db]
         del app.dependency_overrides[get_settings]
+
+
+@pytest.fixture
+def make_actor(db_session, auth_settings):
+    def create(role=UserRole.STUDENT):
+        user = User(first_name="Test", last_name="Actor", role=role,
+                    email=f"actor-{uuid4().hex}@example.com")
+        db_session.add(user)
+        db_session.commit()
+        token = create_access_token(user.id, auth_settings)
+        return user, {"Authorization": f"Bearer {token}"}
+    return create
+
+
+@pytest.fixture
+def admin_headers(make_actor):
+    _, headers = make_actor(UserRole.ADMIN)
+    return headers

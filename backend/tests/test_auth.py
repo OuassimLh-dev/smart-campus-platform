@@ -2,7 +2,6 @@ from datetime import datetime, timedelta, timezone
 
 import jwt
 import pytest
-from sqlalchemy import select
 
 from app.core.security import hash_password, verify_password
 from app.models.user import User
@@ -49,7 +48,7 @@ def test_password_hashing():
     assert not verify_password(PASSWORD, None)
 
 
-@pytest.mark.parametrize("role", ["student", "professor", "admin"])
+@pytest.mark.parametrize("role", ["student"])
 def test_registration(client, db_session, role):
     response = client.post(f"{AUTH}/register", json=registration(role=role))
     assert response.status_code == 201
@@ -130,28 +129,29 @@ def test_me_rejects_invalid_claims(client, auth_settings, kind):
     assert client.get(f"{AUTH}/me", headers=bearer(token)).status_code == 401
 
 
-def test_inactive_user_cannot_authenticate(client):
+def test_inactive_user_cannot_authenticate(client, admin_headers):
     user = register(client)
     token = login(client).json()["access_token"]
-    client.delete(f"/api/v1/users/{user['id']}")
+    assert client.delete(f"/api/v1/users/{user['id']}", headers=admin_headers).status_code == 200
     assert login(client).status_code == 401
     assert client.get(f"{AUTH}/me", headers=bearer(token)).status_code == 401
 
 
-def test_passwordless_user_cannot_login(client):
+def test_passwordless_user_cannot_login(client, admin_headers):
     payload = registration()
     del payload["password"]
-    assert client.post("/api/v1/users", json=payload).status_code == 201
+    assert client.post("/api/v1/users", json=payload, headers=admin_headers).status_code == 201
     assert login(client).status_code == 401
 
 
-def test_existing_user_endpoints_never_expose_hash(client, db_session):
+def test_existing_user_endpoints_never_expose_hash(client, db_session, admin_headers):
     user = register(client)
     path = f"/api/v1/users/{user['id']}"
-    stored_hash = db_session.scalar(select(User.hashed_password))
+    stored_hash = db_session.get(User, user["id"]).hashed_password
     for response in (
-        client.get("/api/v1/users"), client.get(path),
-        client.patch(path, json={"first_name": "Grace"}), client.delete(path),
+        client.get("/api/v1/users", headers=admin_headers), client.get(path, headers=admin_headers),
+        client.patch(path, json={"first_name": "Grace"}, headers=admin_headers),
+        client.delete(path, headers=admin_headers),
     ):
         assert response.status_code == 200
         assert_no_credentials(response)
