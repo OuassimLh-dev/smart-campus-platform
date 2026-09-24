@@ -4,6 +4,8 @@ from sqlalchemy.orm import Session
 
 from app.models.user import User
 from app.schemas.user import UserCreate, UserUpdate
+from app.models import StudentProfile, ProfessorProfile, UserRole
+from app.services.profile import ProfileConflictError
 
 
 class DuplicateEmailError(Exception):
@@ -52,6 +54,12 @@ def create_user(
 
 def update_user(db: Session, user: User, payload: UserUpdate) -> User:
     changes = payload.model_dump(exclude_unset=True)
+    if "role" in changes:
+        db.scalar(select(User).where(User.id == user.id).with_for_update()
+                  .execution_options(populate_existing=True))
+        for model, required_role in ((StudentProfile, UserRole.STUDENT), (ProfessorProfile, UserRole.PROFESSOR)):
+            if changes["role"] != required_role and db.scalar(select(model.id).where(model.user_id == user.id)) is not None:
+                raise ProfileConflictError("Cannot change role while an incompatible academic profile exists")
     if "email" in changes:
         _ensure_email_available(db, changes["email"], user.id)
     for field, value in changes.items():

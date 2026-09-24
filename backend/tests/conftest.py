@@ -2,7 +2,7 @@ from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, event
 from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
 
@@ -23,6 +23,10 @@ def db_session():
         connect_args={"check_same_thread": False},
         poolclass=StaticPool,
     )
+    @event.listens_for(engine, "connect")
+    def enable_foreign_keys(connection, _):
+        connection.execute("PRAGMA foreign_keys=ON")
+
     Base.metadata.create_all(engine)
     try:
         with Session(engine) as session:
