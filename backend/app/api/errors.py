@@ -2,9 +2,12 @@ from fastapi import Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
+from app.services.academic import AcademicConflictError, AcademicNotFoundError
 from app.services.profile import (
     ProfileConflictError, ProfileNotFoundError, ProfileRoleError, ProfileValidationError,
 )
+
+ACADEMIC_ERROR_STATUS = {AcademicConflictError: 409, AcademicNotFoundError: 404}
 
 PROFILE_ERROR_STATUS = {
     ProfileConflictError: 409,
@@ -12,6 +15,10 @@ PROFILE_ERROR_STATUS = {
     ProfileRoleError: 403,
     ProfileValidationError: 422,
 }
+
+
+async def academic_error_handler(request: Request, exc: Exception) -> JSONResponse:
+    return JSONResponse(status_code=ACADEMIC_ERROR_STATUS[type(exc)], content={"detail": str(exc)})
 
 
 async def profile_error_handler(request: Request, exc: Exception) -> JSONResponse:

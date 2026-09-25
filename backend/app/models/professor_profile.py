@@ -8,6 +8,7 @@ from app.db.base import Base
 
 if TYPE_CHECKING:
     from app.models.user import User
+    from app.models.course import Course
 
 
 class ProfessorProfile(Base):
@@ -25,3 +26,4 @@ class ProfessorProfile(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
     user: Mapped["User"] = relationship(back_populates="professor_profile")
+    courses: Mapped[list["Course"]] = relationship(back_populates="professor")
