@@ -1,4 +1,5 @@
 from uuid import uuid4
+from datetime import date
 
 import pytest
 from fastapi.testclient import TestClient
@@ -76,3 +77,43 @@ def make_actor(db_session, auth_settings):
 def admin_headers(make_actor):
     _, headers = make_actor(UserRole.ADMIN)
     return headers
+
+
+@pytest.fixture
+def academic_setup(db_session, make_actor):
+    from app.models import AcademicTerm, Course, CourseOffering, Department, ProfessorProfile, StudentProfile
+
+    def academic_actor(role):
+        user, headers = make_actor(role)
+        if role == UserRole.STUDENT:
+            profile = StudentProfile(user_id=user.id, student_number=f"S-{user.id}", department="Computing",
+                                     program="Software Engineering", year_level=1, enrollment_year=2026,
+                                     expected_graduation_year=2030)
+        else:
+            profile = ProfessorProfile(user_id=user.id, employee_number=f"P-{user.id}", department="Computing",
+                                       academic_title="Professor", office_location="A-101", research_interests="Systems")
+        db_session.add(profile)
+        db_session.commit()
+        return profile, headers
+
+    student, student_headers = academic_actor(UserRole.STUDENT)
+    other_student, other_student_headers = academic_actor(UserRole.STUDENT)
+    professor, professor_headers = academic_actor(UserRole.PROFESSOR)
+    other_professor, other_professor_headers = academic_actor(UserRole.PROFESSOR)
+    _, admin_headers = make_actor(UserRole.ADMIN)
+    department = Department(code="SE", name="Software Engineering")
+    db_session.add(department)
+    db_session.flush()
+    # Deliberately assign a different course-level professor to detect authorization mistakes.
+    course = Course(code="SE101", title="Introduction", credits=3,
+                    department_id=department.id, professor_id=other_professor.id)
+    term = AcademicTerm(name="Fall", academic_year="2026-2027", start_date=date(2026, 9, 1), end_date=date(2026, 12, 31))
+    db_session.add_all([course, term])
+    db_session.flush()
+    offering = CourseOffering(course_id=course.id, professor_id=professor.id, term_id=term.id, section="A", capacity=2)
+    db_session.add(offering)
+    db_session.commit()
+    return dict(student=student, student_headers=student_headers, other_student=other_student,
+                other_student_headers=other_student_headers, professor=professor, professor_headers=professor_headers,
+                other_professor=other_professor, other_professor_headers=other_professor_headers,
+                admin_headers=admin_headers, department=department, course=course, term=term, offering=offering)

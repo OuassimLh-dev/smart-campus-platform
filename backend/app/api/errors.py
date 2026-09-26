@@ -3,11 +3,13 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 from app.services.academic import AcademicConflictError, AcademicNotFoundError
+from app.services.delivery import AcademicPermissionError, AcademicValidationError
 from app.services.profile import (
     ProfileConflictError, ProfileNotFoundError, ProfileRoleError, ProfileValidationError,
 )
 
-ACADEMIC_ERROR_STATUS = {AcademicConflictError: 409, AcademicNotFoundError: 404}
+ACADEMIC_ERROR_STATUS = {AcademicConflictError: 409, AcademicNotFoundError: 404,
+                         AcademicPermissionError: 403, AcademicValidationError: 422}
 
 PROFILE_ERROR_STATUS = {
     ProfileConflictError: 409,

@@ -7,6 +7,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
 
 if TYPE_CHECKING:
+    from app.models.enrollment import Enrollment
     from app.models.user import User
 
 
@@ -32,3 +33,4 @@ class StudentProfile(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
     user: Mapped["User"] = relationship(back_populates="student_profile")
+    enrollments: Mapped[list["Enrollment"]] = relationship(back_populates="student")

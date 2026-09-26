@@ -7,6 +7,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
 
 if TYPE_CHECKING:
+    from app.models.course_offering import CourseOffering
     from app.models.department import Department
     from app.models.professor_profile import ProfessorProfile
 
@@ -33,3 +34,4 @@ class Course(Base):
     )
     department: Mapped["Department"] = relationship(back_populates="courses")
     professor: Mapped["ProfessorProfile | None"] = relationship(back_populates="courses")
+    offerings: Mapped[list["CourseOffering"]] = relationship(back_populates="course")

@@ -7,6 +7,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
 
 if TYPE_CHECKING:
+    from app.models.course_offering import CourseOffering
     from app.models.user import User
     from app.models.course import Course
 
@@ -27,3 +28,4 @@ class ProfessorProfile(Base):
     )
     user: Mapped["User"] = relationship(back_populates="professor_profile")
     courses: Mapped[list["Course"]] = relationship(back_populates="professor")
+    offerings: Mapped[list["CourseOffering"]] = relationship(back_populates="professor")
