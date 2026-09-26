@@ -38,3 +38,9 @@ ENV/
 *.swp
 *.swo
 *~
+
+# Frontend dependencies and tooling
+node_modules/
+*.tsbuildinfo
+npm-debug.log*
+pnpm-debug.log*

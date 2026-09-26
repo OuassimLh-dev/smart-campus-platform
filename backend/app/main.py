@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.auth import router as auth_router
 from app.api.errors import PROFILE_ERROR_STATUS, profile_error_handler, validation_error_handler
@@ -17,6 +18,13 @@ from app.api.enrollments import router as enrollments_router
 from app.api.grades import router as grades_router
 
 app = FastAPI(title="Smart Campus Management Platform API")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://127.0.0.1:5173", "http://localhost:5173"],
+    allow_methods=["GET", "POST"],
+    allow_headers=["Authorization", "Content-Type"],
+    allow_credentials=False,
+)
 app.include_router(terms_router, prefix="/api/v1")
 app.include_router(offerings_router, prefix="/api/v1")
 app.include_router(enrollments_router, prefix="/api/v1")
