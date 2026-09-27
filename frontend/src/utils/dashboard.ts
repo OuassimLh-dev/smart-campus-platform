@@ -8,9 +8,9 @@ export const dashboardSections: Record<Role, { title: string; description: strin
     { title: 'Grades', description: 'Follow your progress through each term.' },
   ],
   professor: [
-    { title: 'My Courses', description: 'A home for your teaching activity.' },
-    { title: 'Students', description: 'Stay connected to the students you teach.' },
-    { title: 'Grading', description: 'Review progress and record achievement.' },
+    { title: 'My Profile', description: 'Manage your teaching profile.', path: '/professor/profile' },
+    { title: 'My Courses', description: 'View your assigned course offerings.', path: '/professor/courses' },
+    { title: 'Students / Grading', description: 'Select an offering to view students and record grades.', path: '/professor/courses' },
   ],
   admin: [
     { title: 'Users', description: 'Support your campus community.' },

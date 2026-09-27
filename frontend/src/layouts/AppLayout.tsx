@@ -6,7 +6,7 @@ import { roleLabels } from '../utils/dashboard'
 export function AppLayout() {
   const { user, logout } = useAuth()
   const { pathname } = useLocation()
-  const pageTitles: Record<string, string> = { '/dashboard': 'Dashboard', '/profile': 'Profile', '/courses': 'Courses', '/enrollments': 'Enrollments' }
+  const pageTitles: Record<string, string> = { '/professor/profile': 'Profile', '/professor/courses': 'My Courses', '/dashboard': 'Dashboard', '/profile': 'Profile', '/courses': 'Courses', '/enrollments': 'Enrollments' }
   if (!user) return null
   return <div className="app-shell">
     <a className="skip-link" href="#main-content">Skip to content</a>
@@ -17,6 +17,9 @@ export function AppLayout() {
         <NavLink to="/dashboard" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
           <span aria-hidden="true">▦</span> Dashboard
         </NavLink>
+        {user.role === 'professor' && ['/professor/profile', '/professor/courses'].map(path =>
+          <NavLink key={path} to={path} className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>{pageTitles[path]}</NavLink>,
+        )}
         {user.role === 'student' && ['/profile', '/courses', '/enrollments'].map(path =>
           <NavLink key={path} to={path} className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>{pageTitles[path]}</NavLink>,
         )}
@@ -25,7 +28,7 @@ export function AppLayout() {
     </aside>
     <div className="workspace">
       <header className="topbar">
-        <span className="breadcrumb">Workspace <span>/</span> <strong>{pageTitles[pathname] || 'Workspace'}</strong></span>
+        <span className="breadcrumb">Workspace <span>/</span> <strong>{pageTitles[pathname] || (pathname.startsWith('/professor/courses/') ? 'Students and grades' : 'Workspace')}</strong></span>
         <div className="topbar-actions"><span className="role-badge">{roleLabels[user.role]}</span>
           <button className="text-button" onClick={logout}>Log out <span aria-hidden="true">↗</span></button>
         </div>

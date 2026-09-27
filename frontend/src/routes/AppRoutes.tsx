@@ -1,3 +1,6 @@
+import { ProfessorProfilePage } from '../pages/ProfessorProfilePage'
+import { ProfessorCoursesPage } from '../pages/ProfessorCoursesPage'
+import { ProfessorRosterPage } from '../pages/ProfessorRosterPage'
 import { Navigate, Outlet, Route, Routes } from 'react-router'
 import { SessionLoading } from '../components/SessionLoading'
 import { useAuth } from '../hooks/useAuth'
@@ -7,6 +10,11 @@ import { LoginPage } from '../pages/LoginPage'
 import { StudentProfilePage } from '../pages/StudentProfilePage'
 import { CourseCatalogPage } from '../pages/CourseCatalogPage'
 import { EnrollmentsPage } from '../pages/EnrollmentsPage'
+
+function ProfessorRoute() {
+  const { user } = useAuth()
+  return user?.role === 'professor' ? <Outlet /> : <Navigate to="/dashboard" replace />
+}
 
 function StudentRoute() {
   const { user } = useAuth()
@@ -25,6 +33,11 @@ export function AppRoutes() {
     <Route element={<ProtectedRoute />}>
       <Route element={<AppLayout />}>
         <Route path="/dashboard" element={<DashboardPage />} />
+        <Route element={<ProfessorRoute />}>
+          <Route path="/professor/profile" element={<ProfessorProfilePage />} />
+          <Route path="/professor/courses" element={<ProfessorCoursesPage />} />
+          <Route path="/professor/courses/:offeringId/students" element={<ProfessorRosterPage />} />
+        </Route>
         <Route element={<StudentRoute />}>
           <Route path="/profile" element={<StudentProfilePage />} />
           <Route path="/courses" element={<CourseCatalogPage />} />

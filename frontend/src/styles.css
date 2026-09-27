@@ -124,3 +124,7 @@ input::placeholder { color: #96a099; }
   .offering-details { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .workflow-panel { padding: 20px; }
 }
+
+.profile-form textarea { width: 100%; box-sizing: border-box; padding: 12px; border: 1px solid #cbd5ce; border-radius: 8px; font: inherit; resize: vertical; }
+.grade-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+.grade-feedback { white-space: pre-wrap; overflow-wrap: anywhere; }
