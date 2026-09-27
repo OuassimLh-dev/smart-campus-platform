@@ -1,9 +1,10 @@
 import type { Role } from '../types/auth'
 
-export const dashboardSections: Record<Role, { title: string; description: string }[]> = {
+export const dashboardSections: Record<Role, { title: string; description: string; path?: string }[]> = {
   student: [
-    { title: 'My Courses', description: 'Your learning, organized in one place.' },
-    { title: 'Enrollments', description: 'Keep track of your academic journey.' },
+    { title: 'My Profile', description: 'Manage your academic information.', path: '/profile' },
+    { title: 'My Courses', description: 'Browse available course offerings.', path: '/courses' },
+    { title: 'Enrollments', description: 'Keep track of your academic journey.', path: '/enrollments' },
     { title: 'Grades', description: 'Follow your progress through each term.' },
   ],
   professor: [

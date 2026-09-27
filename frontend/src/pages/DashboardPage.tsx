@@ -1,4 +1,5 @@
 import { useAuth } from '../hooks/useAuth'
+import { Link } from 'react-router'
 import { dashboardSections, roleLabels } from '../utils/dashboard'
 
 export function DashboardPage() {
@@ -20,8 +21,8 @@ export function DashboardPage() {
       <div className="section-heading"><h2 id="tools-heading">Your academic workspace</h2><span>{sections.length} areas</span></div>
       <div className="card-grid">{sections.map((section, index) =>
         <article className="feature-card" key={section.title}>
-          <div className="card-top"><span className="card-number">0{index + 1}</span><span className="soon-badge">Coming soon</span></div>
-          <h3>{section.title}</h3><p>{section.description}</p>
+          <div className="card-top"><span className="card-number">0{index + 1}</span>{!section.path && <span className="soon-badge">Coming soon</span>}</div>
+          <h3>{section.path ? <Link to={section.path}>{section.title} →</Link> : section.title}</h3><p>{section.description}</p>
           <div className="card-footer">Part of your {roleLabels[user.role].toLowerCase()} workspace</div>
         </article>,
       )}</div>

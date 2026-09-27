@@ -58,4 +58,22 @@ is kept only in memory.
 
 Session storage is tab-scoped but remains accessible to JavaScript; this is a
 portfolio tradeoff, not an HttpOnly-cookie implementation. Backend RBAC remains
-the authority. Dashboard cards are placeholders, not working management pages.
+the authority. Student profile, course-offering browsing, and enrollment pages are
+implemented; professor/admin management and grades remain placeholders.
+
+## Student workflow
+
+Student navigation links to /profile, /courses, and /enrollments. A missing profile
+opens onboarding rather than a generic error. Catalog enrollment posts only
+course_offering_id. Dropping an enrolled record requires confirmation and updates
+its status without removing it from history. The current backend does not allow
+re-enrollment after dropping the same offering.
+
+Offering and enrollment responses contain IDs, not nested course/term data.
+Related details are resolved through authenticated detail endpoints, deduplicated
+within each page. Professor public profiles do not contain names, so the UI shows
+academic title and profile ID. Capacity is total capacity, not seats remaining.
+Failed related lookups keep the record visible with an explicit fallback.
+
+The catalog loads 20 offerings per page and optionally filters to open offerings.
+Local CORS allows GET, POST, and PATCH from the two existing Vite origins only.

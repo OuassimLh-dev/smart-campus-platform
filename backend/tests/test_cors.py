@@ -26,3 +26,15 @@ def test_other_origins_and_methods_rejected():
             "Origin": "http://127.0.0.1:5173", "Access-Control-Request-Method": "DELETE",
         })
         assert response.status_code == 400
+
+
+def test_student_patch_preflight():
+    with TestClient(app) as client:
+        for origin in ("http://127.0.0.1:5173", "http://localhost:5173"):
+            for path in ("/api/v1/students/me", "/api/v1/enrollments/1/drop"):
+                response = client.options(path, headers={
+                    "Origin": origin, "Access-Control-Request-Method": "PATCH",
+                    "Access-Control-Request-Headers": "authorization,content-type",
+                })
+                assert response.status_code == 200
+                assert response.headers["access-control-allow-origin"] == origin

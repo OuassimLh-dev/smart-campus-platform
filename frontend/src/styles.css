@@ -91,3 +91,36 @@ input::placeholder { color: #96a099; }
 @media (min-width: 1450px) { .card-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 @media (max-width: 1100px) { .sidebar { width: 210px; padding: 30px 18px; } .topbar { padding: 0 28px; } .main-content { padding: 35px 28px; } .card-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .profile-role { min-width: auto; padding-right: 0; } }
 @media (max-width: 760px) { .login-page { grid-template-columns: 1fr; } .login-intro { padding: 28px; } .intro-copy, .intro-footer { display: none; } .login-panel { min-height: calc(100vh - 100px); padding: 32px 26px; } .login-form-wrap { padding-top: 15px; } .app-shell { flex-direction: column; } .sidebar { width: 100%; border-right: 0; border-bottom: 1px solid #e0e5dd; padding: 18px 24px; flex-direction: row; justify-content: space-between; align-items: center; } .nav-caption, .sidebar-note { display: none; } .topbar { height: 65px; padding: 0 24px; } .breadcrumb { display: none; } .topbar-actions { width: 100%; justify-content: space-between; } .main-content { padding: 32px 24px; } .profile-card { flex-wrap: wrap; padding: 22px; } .profile-role { width: 100%; border-left: 0; border-top: 1px solid #d5dfcd; padding: 15px 0 0; } .card-grid { grid-template-columns: 1fr; } .page-heading h1 { font-size: 32px; } .section-heading h2 { font-size: 16px; } }
+
+/* Student workflow extends the existing workspace styles. */
+.workflow-panel { background: #fff; border: 1px solid #e1e6dc; border-radius: 8px; padding: 26px; overflow-wrap: anywhere; }
+.workflow-panel h2 { font-size: 19px; font-weight: 550; line-height: 1.5; }
+.profile-form { margin-top: 12px; }
+.form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 22px; }
+.compact-button { width: auto; min-width: 145px; justify-content: center; gap: 12px; }
+.secondary-button { background: #fff; border: 1px solid #bbcbbd; color: #294d3d; padding: 10px 15px; border-radius: 5px; font-size: 13px; }
+.secondary-button:disabled { cursor: default; opacity: .5; }
+.notice { background: #eaf2e6; border: 1px solid #d0dfc9; color: #344e2d; padding: 15px; border-radius: 6px; margin: 18px 0; font-size: 14px; line-height: 1.7; }
+.notice a { font-weight: 600; }
+.checkbox-label { display: flex; align-items: center; gap: 10px; margin: 0 0 24px; font-size: 14px; }
+.checkbox-label input { width: 18px; height: 18px; accent-color: #214c40; }
+.offering-list { display: grid; gap: 20px; margin-top: 20px; }
+.offering-details { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin: 20px 0; }
+.offering-details dt { font-size: 11px; color: #65715f; margin-bottom: 6px; }
+.offering-details dd { margin: 0; font-size: 14px; line-height: 1.5; }
+.pagination { display: flex; align-items: center; gap: 20px; margin-top: 26px; font-size: 13px; }
+.enrollment-meta { display: flex; justify-content: space-between; gap: 15px; align-items: center; font-size: 12px; margin-bottom: 20px; color: #65715f; }
+.enrollment-status { padding: 6px 10px; border-radius: 4px; background: #e8efdf; color: #344e2d; text-transform: capitalize; font-weight: 600; }
+.status-dropped { background: #f2eee8; color: #715634; }
+.status-completed { background: #e5eef3; color: #35576c; }
+.drop-confirm { padding: 18px; background: #fcf5ef; border: 1px solid #e6d9ca; border-radius: 6px; font-size: 14px; line-height: 1.7; }
+.drop-confirm button { margin: 0 12px 8px 0; }
+.danger-button { color: #873e2d; border-color: #d4b4a7; }
+@media (max-width: 760px) {
+  .sidebar { flex-wrap: wrap; gap: 16px; }
+  .sidebar nav { display: flex; flex-wrap: wrap; width: 100%; gap: 4px; }
+  .nav-link { padding: 10px; }
+  .form-grid { grid-template-columns: 1fr; }
+  .offering-details { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .workflow-panel { padding: 20px; }
+}
