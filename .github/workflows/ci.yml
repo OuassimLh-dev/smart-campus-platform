@@ -90,3 +90,43 @@ jobs:
       - name: Tear down stack and volumes
         if: always()
         run: docker compose down -v --remove-orphans
+
+  e2e:
+    name: Playwright E2E
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install dependencies
+        run: npm ci --prefix frontend
+      - name: Install Chromium
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+      - name: Run disposable Docker E2E suite
+        run: sh scripts/e2e.sh
+      - name: Upload failure report and traces
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-failure
+          path: |
+            frontend/playwright-report/
+            frontend/test-results/
+          retention-days: 7
+          if-no-files-found: ignore
+      - name: Ensure E2E stack and volumes are removed
+        if: always()
+        env:
+          JWT_SECRET_KEY: e2e-only-fake-jwt-secret-never-use-in-production-123456
+          POSTGRES_PASSWORD: e2e_only_fake_password
+        run: >-
+          docker compose --env-file /dev/null
+          -p smart-campus-e2e-${{ github.run_id }}-${{ github.run_attempt }}
+          -f compose.yaml -f compose.e2e.yaml down -v --remove-orphans

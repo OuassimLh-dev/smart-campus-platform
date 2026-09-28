@@ -1,0 +1,14 @@
+# Test-only override; use through scripts/e2e.sh, never against developer data.
+services:
+  db:
+    environment:
+      POSTGRES_DB: smart_campus_e2e
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U campus_user -d smart_campus_e2e"]
+  migrate:
+    environment:
+      PGDATABASE: smart_campus_e2e
+  backend:
+    environment:
+      DATABASE_URL: postgresql+psycopg://campus_user:e2e_only_fake_password@db:5432/smart_campus_e2e
+    ports: !reset []

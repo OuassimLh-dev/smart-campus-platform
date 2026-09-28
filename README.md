@@ -328,6 +328,41 @@ routing when deploying manually. No Railway token or GitHub Actions deployment
 step is needed. See [private networking](https://docs.railway.com/networking/private-networking)
 and [pre-deploy commands](https://docs.railway.com/deployments/pre-deploy-command).
 
+## Browser E2E tests
+
+Playwright verifies real login, role navigation, route protection, and basic page
+loading through the Docker nginx frontend at `http://localhost:8080`. Chromium
+is the only browser. No APIs are mocked.
+
+From the repository root (Node 22.12+ and Docker Compose 2.24.4+):
+
+```bash
+npm ci --prefix frontend
+(cd frontend && npx playwright install --with-deps chromium)
+sh scripts/e2e.sh
+```
+
+Port 8080 must be free. If your development stack is running, stop its frontend
+with `docker compose stop frontend` first; restart it afterward with
+`docker compose start frontend`. The E2E runner does not stop it for you.
+
+Each run creates a uniquely named Compose project and fresh PostgreSQL volume,
+uses fake test secrets without reading `.env`, applies the existing migrations,
+and seeds three fake accounts with hashed passwords. The seed refuses non-E2E
+databases and nonempty user tables. It adds no production endpoint or behavior.
+The runner always removes **only its own disposable containers and volume** on
+exit, including test failures. No developer database reset is needed.
+
+`npm --prefix frontend run test:e2e` runs only the browser tests against an
+already prepared stack; it never resets data. To inspect the disposable stack
+interactively, use `sh scripts/e2e.sh --ui` (close the UI to clean up).
+Reports, failure screenshots, and traces are ignored by Git and excluded from
+the frontend image. View the last report with
+`(cd frontend && npx playwright show-report)`. CI runs this suite in a separate
+job and uploads artifacts only on failure. The suite intentionally covers access
+and navigation; a complete academic creation/enrollment/grading flow is not yet
+included.
+
 ## API Documentation
 
 With the backend running:

@@ -44,3 +44,7 @@ node_modules/
 *.tsbuildinfo
 npm-debug.log*
 pnpm-debug.log*
+
+# Playwright runtime artifacts
+playwright-report/
+test-results/
