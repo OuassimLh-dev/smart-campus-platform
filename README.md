@@ -348,8 +348,8 @@ with `docker compose stop frontend` first; restart it afterward with
 
 Each run creates a uniquely named Compose project and fresh PostgreSQL volume,
 uses fake test secrets without reading `.env`, applies the existing migrations,
-and seeds three fake accounts with hashed passwords. The seed refuses non-E2E
-databases and nonempty user tables. It adds no production endpoint or behavior.
+and seeds three fake accounts with hashed passwords plus a professor profile.
+The seed refuses non-E2E databases and nonempty user tables. It adds no production endpoint or behavior.
 The runner always removes **only its own disposable containers and volume** on
 exit, including test failures. No developer database reset is needed.
 
@@ -359,9 +359,10 @@ interactively, use `sh scripts/e2e.sh --ui` (close the UI to clean up).
 Reports, failure screenshots, and traces are ignored by Git and excluded from
 the frontend image. View the last report with
 `(cd frontend && npx playwright show-report)`. CI runs this suite in a separate
-job and uploads artifacts only on failure. The suite intentionally covers access
-and navigation; a complete academic creation/enrollment/grading flow is not yet
-included.
+job and uploads artifacts only on failure. The suite covers authentication and
+role protection, plus one UI-only academic workflow: admin academic setup, student profile creation and enrollment, professor
+grading, and student grade visibility. This stateful scenario has retries disabled
+to avoid reusing partially created records; each runner invocation starts fresh.
 
 ## API Documentation
 

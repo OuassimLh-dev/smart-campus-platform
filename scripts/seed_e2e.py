@@ -3,7 +3,7 @@ from sqlalchemy import select
 
 from app.core.security import hash_password
 from app.db.session import get_engine, get_session_factory
-from app.models import User, UserRole
+from app.models import ProfessorProfile, User, UserRole
 
 engine = get_engine()
 if engine.url.host != "db" or engine.url.database != "smart_campus_e2e":
@@ -19,5 +19,12 @@ with get_session_factory()() as session:
             hashed_password=hash_password("Fake-E2E-Password-Only-123!"),
             is_active=True,
         ))
+    session.flush()
+    professor = session.scalar(select(User).where(User.role == UserRole.PROFESSOR))
+    session.add(ProfessorProfile(
+        user_id=professor.id, employee_number="E2E-PROF-001",
+        department="E2E Computer Science", academic_title="Professor",
+        office_location="E2E Office", research_interests="Software testing",
+    ))
     session.commit()
-print("Seeded three fake E2E accounts")
+print("Seeded three fake E2E accounts and the professor profile")
