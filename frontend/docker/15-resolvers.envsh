@@ -1,0 +1,9 @@
+#!/bin/sh
+# Sourced by the official nginx entrypoint before its envsubst template step.
+# Use the container DNS servers on both Docker and Railway, including IPv6 DNS.
+NGINX_RESOLVERS=$(awk '/^nameserver / { if (index($2, ":")) printf "[%s] ", $2; else printf "%s ", $2 }' /etc/resolv.conf)
+if [ -z "$NGINX_RESOLVERS" ]; then
+    echo "No container DNS resolver configured" >&2
+    exit 1
+fi
+export NGINX_RESOLVERS

@@ -1,6 +1,9 @@
 #!/bin/sh
 set -eu
 export LC_ALL=C
+# libpq reads PGHOST, PGPORT, PGUSER, PGPASSWORD and PGDATABASE directly.
+# DATABASE_URL belongs to SQLAlchemy and is deliberately not passed to psql.
+export PGCONNECT_TIMEOUT="${PGCONNECT_TIMEOUT:-15}"
 
 script=$(mktemp)
 trap 'rm -f "$script"' EXIT HUP INT TERM
@@ -34,4 +37,4 @@ SQL
 done
 [ "$found" = true ] || { echo 'No SQL migrations found in /migrations' >&2; exit 1; }
 # Each file owns its BEGIN/COMMIT. Stop immediately on any SQL or include error.
-psql -X -v ON_ERROR_STOP=1 -f "$script"
+psql -X -w -v ON_ERROR_STOP=1 -f "$script"

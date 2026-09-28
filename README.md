@@ -245,6 +245,89 @@ and the `/grades` SPA route, then always tear down the stack and its volumes.
 CI uses disposable test configuration and read-only repository permissions.
 Newer runs for the same ref cancel older in-progress runs.
 
+## Deployment: Railway
+
+Deployment support is prepared; this repository does not imply a live Railway
+deployment. Use three services in the same Railway project/environment:
+`frontend`, `backend`, and `Postgres`. Only `frontend` needs a public domain.
+Keep backend networking private and do not enable a public PostgreSQL TCP proxy.
+The browser calls same-origin `/api/v1`; nginx alone resolves the private backend.
+
+New Railway services must configure these settings manually in the service
+dashboard. Connect this repository separately for each application service:
+
+| Setting | Backend | Frontend |
+| --- | --- | --- |
+| Root directory | `/backend` | `/frontend` |
+| Build | Detected `Dockerfile` | Detected `Dockerfile` |
+| Public domain | None (private service) | Enabled |
+| Pre-deploy command | `sh /app/scripts/migrate.sh` | None |
+| Healthcheck path | `/api/v1/health` | `/api/v1/health` (through backend) |
+| Healthcheck timeout | Dashboard default or 180–300 seconds | Dashboard default or 180–300 seconds |
+| Restart policy | Optional dashboard setting | Optional dashboard setting |
+
+Leave start-command overrides empty to use the Docker image commands. Set the
+backend's `PORT=8000` explicitly so the frontend can reference it. The backend
+honors any `PORT` override, defaulting to 8000 locally. New Railway environments support private IPv4, so the default bind address
+`0.0.0.0` works. For a legacy IPv6-only environment, set `BIND_HOST=::`.
+The frontend listens on Railway's `PORT` (default 80 in the image), on both IPv4
+and IPv6. Set the frontend public domain's target port to that value.
+
+Legacy Config as Code is deprecated and unavailable to new services. This
+setup uses dashboard settings only. See the
+[monorepo guide](https://docs.railway.com/deployments/monorepo).
+
+Backend variables (replace service names in references if yours differ):
+
+| Variable | Value / Railway reference |
+| --- | --- |
+| `DATABASE_URL` | `${{Postgres.DATABASE_URL}}` (private PostgreSQL URL) |
+| `PGHOST` | `${{Postgres.PGHOST}}` (must be the private host) |
+| `PGPORT` | `${{Postgres.PGPORT}}` |
+| `PGUSER` | `${{Postgres.PGUSER}}` |
+| `PGPASSWORD` | `${{Postgres.PGPASSWORD}}` |
+| `PGDATABASE` | `${{Postgres.PGDATABASE}}` |
+| `JWT_SECRET_KEY` | Generate a unique random secret of at least 32 characters |
+| `JWT_ALGORITHM` | `HS256` |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | `30` (or another positive integer) |
+| `PORT` | `8000` (explicit referenceable backend port) |
+| `BIND_HOST` | Optional; default `0.0.0.0`, use `::` for legacy IPv6-only networks |
+
+The application accepts `postgresql://` and `postgresql+psycopg://`; its engine
+normalizes either to the psycopg driver. Referencing the database's standard URL
+avoids manually rebuilding or incorrectly escaping credentials. Do not use its
+public URL. The migration runner **does not read DATABASE_URL**: `psql` uses the
+separate standard `PG*` variables, with a 15-second connection timeout and no
+interactive password prompt.
+
+Frontend variables:
+
+| Variable | Value / Railway reference |
+| --- | --- |
+| `BACKEND_HOST` | `${{backend.RAILWAY_PRIVATE_DOMAIN}}` |
+| `BACKEND_PORT` | `${{backend.PORT}}` |
+| `PORT` | Provided by Railway; no manual value required |
+
+Do not put the private hostname in `VITE_API_BASE_URL`; the Docker build keeps
+that value at `/api/v1`. nginx templates substitute only the deployment variables
+and the container DNS resolver list. nginx runtime variables remain intact, and
+backend DNS is refreshed to follow redeployments. Local defaults remain
+`BACKEND_HOST=backend`, `BACKEND_PORT=8000`, and frontend `PORT=80`.
+
+The backend image bundles `psql`, the unchanged SQL files, and the same migration
+runner used by Compose. Railway's pre-deploy command applies pending migrations
+and stops deployment on failure; recorded migrations are skipped. Set a suitable
+pre-deploy timeout in the dashboard (for example 300 seconds). The migration
+recovery limitation described above still applies. Deploy PostgreSQL first, then
+the backend, then the frontend, because its healthcheck also checks backend
+reachability. Railway does not use Compose dependency ordering.
+
+Use Railway reference variables instead of copying database credentials. Review
+the resolved private hosts, pre-deploy result, healthchecks, and public frontend
+routing when deploying manually. No Railway token or GitHub Actions deployment
+step is needed. See [private networking](https://docs.railway.com/networking/private-networking)
+and [pre-deploy commands](https://docs.railway.com/deployments/pre-deploy-command).
+
 ## API Documentation
 
 With the backend running:
