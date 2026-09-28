@@ -1,211 +1,290 @@
 # Smart Campus Management Platform
 
-A full-stack campus management system designed to manage students, courses,
-faculty, enrollment, grades, and administrative operations.
+A full-stack academic management platform with role-based workflows for students,
+professors, and administrators. Built as a software engineering portfolio project
+using FastAPI, PostgreSQL, and React.
 
-## Status
+## Overview
 
-🚧 Currently under development.
+Smart Campus connects academic administration, enrollment, teaching, and grading
+in one application. Administrators define the academic structure, students enroll
+in course offerings, and assigned professors manage rosters and grades.
 
-## Planned Technology Stack
+## Key Features
 
-- Python
-- FastAPI
-- PostgreSQL
-- React
-- Docker
+- JWT authentication and API-enforced role-based authorization.
+- PostgreSQL relational model and a documented REST API.
+- Responsive React interface with role-aware navigation and protected routes.
+- Docker Compose environment with nginx, database persistence, and SQL migrations.
+- Automated backend tests covering authentication, authorization, and academic workflows.
 
-## Author
+## Role-Based Workflows
 
-Ouassim Lahraoui  
-Software Engineering Student
-### Professor workflow
+| Role | Capabilities |
+| --- | --- |
+| Student | Manage academic profile; browse courses and offerings; enroll or drop; view enrollment history, grades, and professor feedback. |
+| Professor | Manage professor profile; view assigned offerings and student rosters; create and update numeric grades and feedback. |
+| Administrator | Manage users, departments, courses, academic terms, and course offerings. |
 
-Professors can create or edit their academic profile at `/professor/profile`, then
-open `/professor/courses` to view offerings assigned to their profile (20 per
-page). Each offering links to its roster at
-`/professor/courses/:offeringId/students`. The roster combines student identities,
-enrollment status, and existing grades. Add a grade from 0–100 (up to two decimal
-places) with optional feedback, or explicitly edit an existing grade. Saving an
-edit replaces the grade and feedback; recording a grade completes the enrollment.
+Grades are recorded on a 0–100 scale. Recording a grade completes the enrollment.
+User, department, and course deactivation retains the underlying records; the
+current department and course lists show active records only.
 
-These pages require an authenticated professor. Other roles are redirected to the
-dashboard, and the backend independently enforces offering ownership for rosters
-and grades. An unassigned professor receives a permission error without roster or
-grade controls. No backend API changes are required.
-
-The frontend uses professor profile endpoints (`GET/PATCH /professors/me`,
-`POST /professors/profile`), the filtered offering list
-(`GET /course-offerings?professor_id=...&skip=...&limit=20`), offering details,
-`GET /course-offerings/{id}/students`, and
-`GET /course-offerings/{id}/grades`. Course, term, and professor detail endpoints
-supply display labels. Grading uses `POST` and `PATCH /enrollments/{id}/grade`.
-All paths use the existing `/api/v1` base and authenticated Axios client.
-
-Verification from the repository root:
-
-```sh
-cd backend
-.venv/bin/python -m pytest -q
-cd ../frontend
-npm ci
-npm run typecheck
-npm run build
+```mermaid
+flowchart LR
+    A[Admin creates academic structure] --> B[Student enrolls]
+    B --> C[Professor views roster]
+    C --> D[Professor records grade]
+    D --> E[Student views grade and feedback]
 ```
 
-Run the frontend with `npm run dev` from `frontend/`, alongside the existing
-backend. No new environment variables or dependencies are needed.
+## Architecture
 
-
-### Admin workflow
-
-Admin navigation now links to `/admin/users`, `/admin/departments`,
-`/admin/courses`, `/admin/terms`, and `/admin/course-offerings`. These routes
-reuse the authenticated session and require the admin role; other authenticated
-roles return to `/dashboard`. The backend independently authorizes mutations.
-Student and professor routes and navigation remain unchanged.
-
-- Users: paginated listing, edit names/email/role/active status, and confirmed
-  deactivation. There is no user creation UI. Existing academic profiles may
-  prevent incompatible role changes; the backend conflict is shown in the form.
-  Deactivating or demoting the signed-in admin ends the local session.
-- Departments: create/edit code, name, description, and active status; confirmed
-  deactivation retains the record. Only active departments appear in the existing
-  backend list.
-- Courses: create/edit code, title, description, positive integer credits,
-  department, optional professor, and active status; confirmed deactivation.
-  Only active courses appear in the existing backend list.
-- Terms: create/edit name, academic year, ordered dates, and active status.
-  No delete action is provided.
-- Offerings: create/edit course, professor, term, section, positive integer
-  capacity, and open status. Filter by course, professor, term, or open status.
-  No delete action is provided. Backend conflicts such as duplicate sections or
-  capacity below occupied seats are displayed without discarding form values.
-
-Lists use 20-record pages. Selectors load all pages of available reference data.
-Professor labels use real employee numbers, academic titles, and departments;
-no names are invented. Existing references absent from active lists remain
-selectable when editing, with their IDs clearly identified.
-
-The shared admin page and form use field definitions matching the backend
-schemas, typed records, and a separate Axios service. Required fields, positive
-integers, and term date order are validated before saving. Backend validation
-and duplicate errors use the existing error helper. Forms disable while saving;
-deactivation requires confirmation, including when changing the Active checkbox.
-
-Admin API calls (all under `/api/v1`):
-
-- `GET /users`, `PATCH /users/{id}`, `DELETE /users/{id}`
-- `GET/POST /departments`, `PATCH/DELETE /departments/{id}`
-- `GET/POST /courses`, `PATCH/DELETE /courses/{id}`
-- `GET/POST /terms`, `PATCH /terms/{id}`
-- `GET/POST /course-offerings`, `PATCH /course-offerings/{id}`
-- `GET /professors` for professor assignment selectors
-- Existing `POST /auth/login` and `GET /auth/me` for authentication
-
-Two backend changes support the admin UI: an admin-only paginated professor
-profile listing (previously profiles could only be retrieved by known ID), and
-DELETE in local CORS methods for existing soft-deletion endpoints. The only
-allowed origins remain `http://127.0.0.1:5173` and `http://localhost:5173`.
-Tests cover professor-list authentication, role restrictions, pagination,
-validation, and DELETE preflights.
-
-Run checks from the repository root:
-
-```sh
-cd backend
-.venv/bin/python -m pytest -q
-cd ../frontend
-npm ci
-npm run typecheck
-npm run build
+```mermaid
+flowchart LR
+    browser[Browser]
+    subgraph compose[Docker Compose]
+        frontend[frontend: nginx + React build]
+        subgraph backend[backend]
+            api[FastAPI REST API: JWT authentication and RBAC]
+            orm[SQLAlchemy]
+        end
+        migrate[migrate: one-shot SQL runner]
+        db[(db: PostgreSQL)]
+        frontend -->|/api/ proxy| api
+        api --> orm
+        orm --> db
+        migrate -->|Ordered SQL migrations| db
+    end
+    browser --> frontend
 ```
 
-Use `npm run dev` from `frontend/` to run the UI with the existing backend.
-No new dependencies or environment variables are required.
+Routers handle HTTP requests, services implement business operations, Pydantic
+schemas validate inputs and responses, and SQLAlchemy manages persistence.
+The frontend separates API services, authentication state, route guards, and
+pages. nginx serves the production build and supports direct React Router links.
 
-Manual acceptance checks: sign in as admin and create/edit a department, course,
-term, and offering; verify duplicate errors and offering filters; edit a user and
-confirm deactivation; verify student/professor accounts redirect away from admin
-URLs and their existing workflows still work. Automated backend tests and the
-frontend build passed during implementation. The admin screens were also manually
-verified in the browser across users, departments, courses, academic terms, and
-course offerings.
+Startup order: **database healthy → migrations successful → backend healthy → frontend**.
 
+## Tech Stack
 
-### Student grades
+| Area | Technologies |
+| --- | --- |
+| Backend | Python, FastAPI, Pydantic, SQLAlchemy 2.x, psycopg |
+| Database | PostgreSQL 17, ordered SQL migrations |
+| Authentication | JWT, Argon2 password hashing, role-based authorization |
+| Frontend | React, TypeScript, Vite, React Router, Axios, CSS |
+| Runtime | Docker Compose, nginx |
+| Testing | pytest; SQLite in-memory databases for automated backend tests |
 
-Students can open `/grades` from their sidebar or dashboard to view numeric
-grades, professor feedback, graded dates, enrollment status, course code/title,
-section, and academic term. No feedback and no grades have neutral empty states.
-Students without an academic profile receive a link to set one up.
+## Project Structure
 
-The existing student route guard redirects professors and admins to the dashboard;
-anonymous visitors go to login. The backend continues to restrict grades to the
-current student. No backend changes or new dependencies are needed.
-
-The student grade service uses `GET /students/me` to check profile availability,
-`GET /grades/me` for grades, and `GET /enrollments/me` to link each grade's
-`enrollment_id` to an offering. It then loads `GET /course-offerings/{id}`,
-`GET /courses/{id}`, and `GET /terms/{id}`. All paths use the `/api/v1` base.
-Related lookups are deduplicated within each load. Missing course context does
-not hide recorded grades; the page displays a retry action. Primary request
-failures use the existing API error handling and session-expiration behavior.
-
-Verification from the repository root:
-
-```sh
-cd backend
-.venv/bin/python -m pytest -q
-cd ../frontend
-npm run typecheck
-npm run build
+```text
+backend/
+├── app/                 # API routers, services, models, schemas, configuration
+├── migrations/          # Ordered PostgreSQL SQL migrations
+├── scripts/             # Docker migration runner
+├── tests/               # Backend test suite
+├── Dockerfile
+└── requirements.txt
+frontend/
+├── src/                 # Pages, components, services, hooks, routes, types
+├── Dockerfile
+├── nginx.conf
+└── package.json
+docs/
+└── screenshots/         # Reserved for application screenshots
+compose.yaml
+.env.example
 ```
 
-### Local Docker stack
+## Getting Started with Docker
 
-With Docker Desktop running and a root `.env` containing a random
-`JWT_SECRET_KEY` of at least 32 characters:
+Prerequisites: Git, Docker with Compose, and Python 3 to generate a secret.
+
+```sh
+git clone https://github.com/OuassimLh-dev/smart-campus-platform.git
+cd smart-campus-platform
+cp .env.example .env
+python3 -c 'import secrets; print(secrets.token_urlsafe(32))'
+```
+
+Paste the generated value into `JWT_SECRET_KEY` in `.env` (at least 32 characters).
+Do not commit this file. Then start the stack:
 
 ```sh
 docker compose config --quiet
-docker compose build
-docker compose up -d --wait
+docker compose up --build -d --wait
 docker compose ps
 ```
 
-Open http://localhost:8080. nginx serves the React build, forwards `/api/` to
-FastAPI, and falls back to `index.html` for direct React Router navigation.
-The frontend uses the same-origin `/api/v1` base. The backend is also available
-at http://127.0.0.1:8000/api/v1/health. Both published ports bind only to loopback.
-PostgreSQL is internal to the stack and persists in the `campus_postgres` volume.
-This database is separate from any existing host PostgreSQL database.
+Open [Smart Campus](http://localhost:8080). The backend is available on port 8000.
+Both published ports bind to loopback. PostgreSQL is internal to the stack and
+uses the persistent `campus_postgres` volume, separate from host PostgreSQL data.
 
-The stack uses a local-development database password by default; optionally set
-`POSTGRES_PASSWORD` before first startup using URL-safe characters. The JWT
-secret is required and has no default. Real `.env` files are excluded from image
-build contexts. The one-shot `migrate` service automatically applies the existing
-`backend/migrations/*.sql` files in filename order using `psql` with
-`ON_ERROR_STOP=1`. Files are mounted read-only and retain their own transactions.
-Successful filenames are recorded in `public.schema_migrations`; subsequent
-runs skip recorded files. A session advisory lock serializes concurrent runners.
-Startup order is database healthy → migrations successful → backend healthy →
-frontend. A failed migration stops the runner and prevents backend startup.
+Compose supplies the container database URL. The optional `POSTGRES_PASSWORD`
+uses a local-development default; set it before first startup to override it,
+using URL-safe characters. No default JWT secret is supplied.
 
-Existing metadata-created databases are not automatically marked as migrated.
-For disposable local data, `docker compose down -v` removes the database volume
-so the next startup can build the schema from migrations. Do not use `-v` for
-data you need to preserve. A process failure between a migration's own COMMIT
-and its tracking insert requires inspecting the database before retrying; the
-runner intentionally does not mark unverified migrations as applied.
+A fresh database contains no accounts or academic data. Student accounts can be
+registered through the API documentation; there is no registration UI or seeded
+demo login. Professor and administrator access requires an appropriately
+provisioned account. The admin user-creation API does not assign a password.
+
+Stop the stack while retaining data:
 
 ```sh
-docker compose logs backend
-docker compose exec db pg_isready -U campus_user -d smart_campus
-curl http://127.0.0.1:8000/api/v1/health
-curl http://localhost:8080/api/v1/health
-curl -I http://localhost:8080/grades
 docker compose down
 ```
 
-`docker compose down` stops the stack without removing database data.
+**Warning: the following command deletes the Docker database volume and its data.**
+
+```sh
+docker compose down -v
+```
+
+## Local Development
+
+Prerequisites: Python 3.13 (used by the backend Docker image), PostgreSQL with
+`psql`, and Node.js 22.12 or newer with npm. Commands below use a POSIX shell.
+Stop the Docker stack first if its backend occupies port 8000.
+
+Create a PostgreSQL database and login role, then create the root `.env` from
+[.env.example](.env.example) if it does not exist. Set `DATABASE_URL` to your local
+connection, generate `JWT_SECRET_KEY` as above, and retain `JWT_ALGORITHM=HS256`.
+`ACCESS_TOKEN_EXPIRE_MINUTES` controls access-token lifetime.
+
+For a **fresh local database only**, apply the SQL files in order. Set libpq
+connection variables for your database; `psql` prompts for its password:
+
+```sh
+export PGHOST=localhost PGPORT=5432 PGUSER=campus_user PGDATABASE=smart_campus
+for migration in backend/migrations/*.sql; do
+  psql -X -v ON_ERROR_STOP=1 -f "$migration" || break
+done
+```
+
+This manual bootstrap does not create Docker's migration tracking records. Do not
+rerun it against an initialized database; apply only pending files when maintaining
+a local database. Docker is the primary path for automatic tracked migrations.
+
+Start the backend from the repository root:
+
+```sh
+cd backend
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+```
+
+In another terminal, from the repository root:
+
+```sh
+cd frontend
+cp .env.example .env
+npm install
+npm run dev
+```
+
+The frontend example sets `VITE_API_BASE_URL=http://127.0.0.1:8000/api/v1`.
+Open [the Vite frontend](http://localhost:5173). Local CORS permits only
+`http://localhost:5173` and `http://127.0.0.1:5173`. In Docker, the frontend uses
+same-origin `/api/v1` requests through nginx instead.
+
+## Database Migrations
+
+The one-shot `migrate` service mounts [backend/migrations](backend/migrations)
+read-only and applies SQL files in filename order. It uses `psql` with
+`ON_ERROR_STOP=1`; each migration retains its own `BEGIN`/`COMMIT` transaction.
+Successful filenames are recorded in `public.schema_migrations` and skipped on
+future runs. A session advisory lock serializes concurrent migration runners.
+A failure prevents initial backend startup.
+
+Do not modify previously applied migrations. Add a new ordered migration for a
+schema change. Existing databases created outside this runner are not
+automatically marked as migrated. If execution is interrupted between a file's
+COMMIT and its tracking insert, inspect the schema and tracking table before
+retrying. There is no automatic rollback or migration-baselining tool.
+
+## Testing
+
+From the repository root, with backend dependencies installed:
+
+```sh
+cd backend
+source .venv/bin/activate
+python -m pytest
+```
+
+The current backend suite contains **288 tests** and uses isolated SQLite
+in-memory databases; it does not require a running PostgreSQL instance.
+
+From the repository root, with frontend dependencies installed:
+
+```sh
+cd frontend
+npm run typecheck
+npm run build
+```
+
+The production build includes TypeScript compilation. It is a build check, not
+an automated browser test suite. Validate Compose configuration from the root:
+
+```sh
+docker compose config --quiet
+```
+
+## API Documentation
+
+With the backend running:
+
+- [Swagger UI](http://localhost:8000/docs)
+- [OpenAPI schema](http://localhost:8000/openapi.json)
+- Health endpoint: `GET /api/v1/health` → `{"status":"ok"}`
+
+Health is also available [through nginx](http://localhost:8080/api/v1/health).
+The health endpoint reports API availability, not a database readiness check.
+
+## Security / Authentication
+
+Passwords are hashed with Argon2; API responses exclude password hashes.
+Login returns an expiring JWT access token, and API dependencies enforce the
+current user's active status, role, and resource ownership. Frontend route guards
+support navigation but do not replace backend authorization.
+
+The portfolio frontend stores its token in `sessionStorage`, which is accessible
+to JavaScript. Public registration is limited to students. Secrets are loaded
+from environment configuration and excluded from image build contexts. Refresh
+tokens, password reset, email verification, and OAuth are outside the current scope.
+
+## Screenshots
+
+### Login
+
+![Smart Campus login](docs/screenshots/login.png)
+
+### Student Grades
+
+![Student grades workflow](docs/screenshots/student-grades.png)
+
+### Professor Roster and Grading
+
+![Professor roster and grading](docs/screenshots/professor-roster.png)
+
+### Admin Course Offering Management
+
+![Admin course offering management](docs/screenshots/admin-management.png)
+
+## Current Scope / Future Improvements
+
+The implemented scope covers role-based academic administration, enrollment,
+and grading. It is a portfolio application, not a production deployment.
+Potential next steps include frontend integration tests, PostgreSQL integration
+tests, CI, stronger migration recovery, account provisioning, and deployment
+hardening. Attendance, assignments, messaging, notifications, GPA calculations,
+and transcripts are not implemented.
+
+## Author
+
+Ouassim Lahraoui — Software Engineering Student
