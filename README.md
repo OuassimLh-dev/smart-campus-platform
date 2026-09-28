@@ -128,6 +128,36 @@ Manual acceptance checks: sign in as admin and create/edit a department, course,
 term, and offering; verify duplicate errors and offering filters; edit a user and
 confirm deactivation; verify student/professor accounts redirect away from admin
 URLs and their existing workflows still work. Automated backend tests and the
-frontend build passed during implementation. Browser verification of the new
-admin screens remains pending because the browser approval service hit a usage
-limit.
+frontend build passed during implementation. The admin screens were also manually
+verified in the browser across users, departments, courses, academic terms, and
+course offerings.
+
+
+### Student grades
+
+Students can open `/grades` from their sidebar or dashboard to view numeric
+grades, professor feedback, graded dates, enrollment status, course code/title,
+section, and academic term. No feedback and no grades have neutral empty states.
+Students without an academic profile receive a link to set one up.
+
+The existing student route guard redirects professors and admins to the dashboard;
+anonymous visitors go to login. The backend continues to restrict grades to the
+current student. No backend changes or new dependencies are needed.
+
+The student grade service uses `GET /students/me` to check profile availability,
+`GET /grades/me` for grades, and `GET /enrollments/me` to link each grade's
+`enrollment_id` to an offering. It then loads `GET /course-offerings/{id}`,
+`GET /courses/{id}`, and `GET /terms/{id}`. All paths use the `/api/v1` base.
+Related lookups are deduplicated within each load. Missing course context does
+not hide recorded grades; the page displays a retry action. Primary request
+failures use the existing API error handling and session-expiration behavior.
+
+Verification from the repository root:
+
+```sh
+cd backend
+.venv/bin/python -m pytest -q
+cd ../frontend
+npm run typecheck
+npm run build
+```

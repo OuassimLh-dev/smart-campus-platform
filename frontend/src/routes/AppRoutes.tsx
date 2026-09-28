@@ -1,3 +1,4 @@
+import { StudentGradesPage } from '../pages/StudentGradesPage'
 import { AdminManagementPage } from '../pages/AdminManagementPage'
 import type { AdminKind } from '../types/admin'
 import { ProfessorProfilePage } from '../pages/ProfessorProfilePage'
@@ -53,6 +54,7 @@ export function AppRoutes() {
           <Route path="/profile" element={<StudentProfilePage />} />
           <Route path="/courses" element={<CourseCatalogPage />} />
           <Route path="/enrollments" element={<EnrollmentsPage />} />
+          <Route path="/grades" element={<StudentGradesPage />} />
         </Route>
       </Route>
     </Route>
