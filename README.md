@@ -161,3 +161,51 @@ cd ../frontend
 npm run typecheck
 npm run build
 ```
+
+### Local Docker stack
+
+With Docker Desktop running and a root `.env` containing a random
+`JWT_SECRET_KEY` of at least 32 characters:
+
+```sh
+docker compose config --quiet
+docker compose build
+docker compose up -d --wait
+docker compose ps
+```
+
+Open http://localhost:8080. nginx serves the React build, forwards `/api/` to
+FastAPI, and falls back to `index.html` for direct React Router navigation.
+The frontend uses the same-origin `/api/v1` base. The backend is also available
+at http://127.0.0.1:8000/api/v1/health. Both published ports bind only to loopback.
+PostgreSQL is internal to the stack and persists in the `campus_postgres` volume.
+This database is separate from any existing host PostgreSQL database.
+
+The stack uses a local-development database password by default; optionally set
+`POSTGRES_PASSWORD` before first startup using URL-safe characters. The JWT
+secret is required and has no default. Real `.env` files are excluded from image
+build contexts. The one-shot `migrate` service automatically applies the existing
+`backend/migrations/*.sql` files in filename order using `psql` with
+`ON_ERROR_STOP=1`. Files are mounted read-only and retain their own transactions.
+Successful filenames are recorded in `public.schema_migrations`; subsequent
+runs skip recorded files. A session advisory lock serializes concurrent runners.
+Startup order is database healthy → migrations successful → backend healthy →
+frontend. A failed migration stops the runner and prevents backend startup.
+
+Existing metadata-created databases are not automatically marked as migrated.
+For disposable local data, `docker compose down -v` removes the database volume
+so the next startup can build the schema from migrations. Do not use `-v` for
+data you need to preserve. A process failure between a migration's own COMMIT
+and its tracking insert requires inspecting the database before retrying; the
+runner intentionally does not mark unverified migrations as applied.
+
+```sh
+docker compose logs backend
+docker compose exec db pg_isready -U campus_user -d smart_campus
+curl http://127.0.0.1:8000/api/v1/health
+curl http://localhost:8080/api/v1/health
+curl -I http://localhost:8080/grades
+docker compose down
+```
+
+`docker compose down` stops the stack without removing database data.
