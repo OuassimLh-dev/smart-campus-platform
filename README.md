@@ -235,6 +235,16 @@ an automated browser test suite. Validate Compose configuration from the root:
 docker compose config --quiet
 ```
 
+## Continuous Integration
+
+[GitHub Actions CI](.github/workflows/ci.yml) runs on pushes to `main` and pull
+requests targeting `main`. Independent jobs run the backend pytest suite,
+frontend TypeScript checks and production build, and Docker Compose validation,
+image builds, and integration startup. Docker checks verify both health endpoints
+and the `/grades` SPA route, then always tear down the stack and its volumes.
+CI uses disposable test configuration and read-only repository permissions.
+Newer runs for the same ref cancel older in-progress runs.
+
 ## API Documentation
 
 With the backend running:
@@ -281,7 +291,7 @@ tokens, password reset, email verification, and OAuth are outside the current sc
 The implemented scope covers role-based academic administration, enrollment,
 and grading. It is a portfolio application, not a production deployment.
 Potential next steps include frontend integration tests, PostgreSQL integration
-tests, CI, stronger migration recovery, account provisioning, and deployment
+tests, stronger migration recovery, account provisioning, and deployment
 hardening. Attendance, assignments, messaging, notifications, GPA calculations,
 and transcripts are not implemented.
 
