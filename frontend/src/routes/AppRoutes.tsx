@@ -1,3 +1,5 @@
+import { AdminManagementPage } from '../pages/AdminManagementPage'
+import type { AdminKind } from '../types/admin'
 import { ProfessorProfilePage } from '../pages/ProfessorProfilePage'
 import { ProfessorCoursesPage } from '../pages/ProfessorCoursesPage'
 import { ProfessorRosterPage } from '../pages/ProfessorRosterPage'
@@ -10,6 +12,11 @@ import { LoginPage } from '../pages/LoginPage'
 import { StudentProfilePage } from '../pages/StudentProfilePage'
 import { CourseCatalogPage } from '../pages/CourseCatalogPage'
 import { EnrollmentsPage } from '../pages/EnrollmentsPage'
+
+function AdminRoute() {
+  const { user } = useAuth()
+  return user?.role === 'admin' ? <Outlet /> : <Navigate to="/dashboard" replace />
+}
 
 function ProfessorRoute() {
   const { user } = useAuth()
@@ -33,6 +40,10 @@ export function AppRoutes() {
     <Route element={<ProtectedRoute />}>
       <Route element={<AppLayout />}>
         <Route path="/dashboard" element={<DashboardPage />} />
+        <Route element={<AdminRoute />}>
+          {(['users', 'departments', 'courses', 'terms', 'course-offerings'] as AdminKind[]).map(kind =>
+            <Route key={kind} path={`/admin/${kind}`} element={<AdminManagementPage key={kind} kind={kind} />} />)}
+        </Route>
         <Route element={<ProfessorRoute />}>
           <Route path="/professor/profile" element={<ProfessorProfilePage />} />
           <Route path="/professor/courses" element={<ProfessorCoursesPage />} />

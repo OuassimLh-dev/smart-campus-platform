@@ -128,3 +128,12 @@ input::placeholder { color: #96a099; }
 .profile-form textarea { width: 100%; box-sizing: border-box; padding: 12px; border: 1px solid #cbd5ce; border-radius: 8px; font: inherit; resize: vertical; }
 .grade-actions { display: flex; flex-wrap: wrap; gap: 12px; }
 .grade-feedback { white-space: pre-wrap; overflow-wrap: anywhere; }
+
+.admin-table-wrap { overflow-x: auto; margin-top: 24px; }
+.admin-table { width: 100%; border-collapse: collapse; background: white; font-size: .875rem; }
+.admin-table th, .admin-table td { text-align: left; padding: 14px; border-bottom: 1px solid #e2e7e2; vertical-align: top; max-width: 260px; overflow-wrap: anywhere; }
+.admin-table th { background: #eef2ed; white-space: nowrap; }
+.admin-filters { display: flex; flex-wrap: wrap; gap: 16px; margin: 24px 0; }
+.admin-filters label { display: block; margin-bottom: 8px; }
+.admin-filters select, .profile-form select { width: 100%; padding: 12px; border: 1px solid #cbd5ce; border-radius: 8px; background: white; font: inherit; }
+.profile-form input[type="checkbox"] { width: 20px; height: 20px; display: block; }

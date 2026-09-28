@@ -1,9 +1,9 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
-from app.api.authorization import AuthenticatedUser
+from app.api.authorization import AuthenticatedUser, require_admin
 from app.api.profile_authorization import ProfessorUser, can_read_private_professor_profile
 from app.db.session import get_db
 from app.schemas.professor_profile import (
@@ -13,6 +13,12 @@ from app.services import professor_profile as service
 
 router = APIRouter(prefix="/professors", tags=["professors"])
 DatabaseSession = Annotated[Session, Depends(get_db)]
+
+
+@router.get("", response_model=list[ProfessorProfileRead], dependencies=[Depends(require_admin)])
+def list_profiles(db: DatabaseSession, skip: Annotated[int, Query(ge=0)] = 0,
+                  limit: Annotated[int, Query(ge=1, le=100)] = 20):
+    return service.list_profiles(db, skip, limit)
 
 
 @router.post("/profile", response_model=ProfessorProfileRead, status_code=201)

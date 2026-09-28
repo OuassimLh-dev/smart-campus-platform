@@ -13,10 +13,11 @@ export const dashboardSections: Record<Role, { title: string; description: strin
     { title: 'Students / Grading', description: 'Select an offering to view students and record grades.', path: '/professor/courses' },
   ],
   admin: [
-    { title: 'Users', description: 'Support your campus community.' },
-    { title: 'Departments', description: 'Organize your academic departments.' },
-    { title: 'Courses', description: 'Maintain your institution’s course catalog.' },
-    { title: 'Academic Management', description: 'Coordinate terms, offerings, and enrollment.' },
+    { title: 'Users', description: 'Support your campus community.', path: '/admin/users' },
+    { title: 'Departments', description: 'Organize your academic departments.', path: '/admin/departments' },
+    { title: 'Courses', description: 'Maintain your institution’s course catalog.', path: '/admin/courses' },
+    { title: 'Academic Terms', description: 'Manage the academic calendar.', path: '/admin/terms' },
+    { title: 'Course Offerings', description: 'Assign teaching and manage capacity.', path: '/admin/course-offerings' },
   ],
 }
 

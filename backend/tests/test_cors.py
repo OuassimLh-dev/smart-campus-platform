@@ -23,7 +23,7 @@ def test_other_origins_and_methods_rejected():
         assert response.status_code == 400
         assert "access-control-allow-origin" not in response.headers
         response = client.options("/api/v1/users/1", headers={
-            "Origin": "http://127.0.0.1:5173", "Access-Control-Request-Method": "DELETE",
+            "Origin": "http://127.0.0.1:5173", "Access-Control-Request-Method": "PUT",
         })
         assert response.status_code == 400
 
@@ -38,3 +38,16 @@ def test_student_patch_preflight():
                 })
                 assert response.status_code == 200
                 assert response.headers["access-control-allow-origin"] == origin
+
+
+def test_admin_delete_preflight():
+    with TestClient(app) as client:
+        for origin in ("http://127.0.0.1:5173", "http://localhost:5173"):
+            for path in ("/api/v1/users/1", "/api/v1/departments/1", "/api/v1/courses/1"):
+                response = client.options(path, headers={
+                    "Origin": origin, "Access-Control-Request-Method": "DELETE",
+                    "Access-Control-Request-Headers": "authorization",
+                })
+                assert response.status_code == 200
+                assert response.headers["access-control-allow-origin"] == origin
+                assert "access-control-allow-credentials" not in response.headers

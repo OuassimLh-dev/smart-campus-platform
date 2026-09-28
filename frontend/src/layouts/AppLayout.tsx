@@ -1,3 +1,4 @@
+import { adminTitles } from '../utils/adminFields'
 import { NavLink, Outlet, useLocation } from 'react-router'
 import { Brand } from '../components/Brand'
 import { useAuth } from '../hooks/useAuth'
@@ -6,7 +7,7 @@ import { roleLabels } from '../utils/dashboard'
 export function AppLayout() {
   const { user, logout } = useAuth()
   const { pathname } = useLocation()
-  const pageTitles: Record<string, string> = { '/professor/profile': 'Profile', '/professor/courses': 'My Courses', '/dashboard': 'Dashboard', '/profile': 'Profile', '/courses': 'Courses', '/enrollments': 'Enrollments' }
+  const pageTitles: Record<string, string> = { ...Object.fromEntries(Object.entries(adminTitles).map(([kind, title]) => [`/admin/${kind}`, title])), '/professor/profile': 'Profile', '/professor/courses': 'My Courses', '/dashboard': 'Dashboard', '/profile': 'Profile', '/courses': 'Courses', '/enrollments': 'Enrollments' }
   if (!user) return null
   return <div className="app-shell">
     <a className="skip-link" href="#main-content">Skip to content</a>
@@ -17,6 +18,9 @@ export function AppLayout() {
         <NavLink to="/dashboard" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
           <span aria-hidden="true">▦</span> Dashboard
         </NavLink>
+        {user.role === 'admin' && Object.entries(adminTitles).map(([kind, title]) =>
+          <NavLink key={kind} to={`/admin/${kind}`} className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>{title}</NavLink>,
+        )}
         {user.role === 'professor' && ['/professor/profile', '/professor/courses'].map(path =>
           <NavLink key={path} to={path} className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>{pageTitles[path]}</NavLink>,
         )}

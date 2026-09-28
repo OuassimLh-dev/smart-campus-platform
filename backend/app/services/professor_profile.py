@@ -1,3 +1,4 @@
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models.professor_profile import ProfessorProfile
@@ -31,3 +32,7 @@ def update_profile(db: Session, user: User, payload: ProfessorProfileUpdate) -> 
     for field, value in changes.items():
         setattr(profile, field, value)
     return save_profile(db, profile, "employee_number")
+
+
+def list_profiles(db: Session, skip: int = 0, limit: int = 20) -> list[ProfessorProfile]:
+    return list(db.scalars(select(ProfessorProfile).order_by(ProfessorProfile.id).offset(skip).limit(limit)))
