@@ -4,6 +4,13 @@ A full-stack academic management platform with role-based workflows for students
 professors, and administrators. Built as a software engineering portfolio project
 using FastAPI, PostgreSQL, and React.
 
+## Live Demo
+
+**Production:** https://frontend-production-8606.up.railway.app
+
+The application is deployed on Railway with a React/nginx frontend, FastAPI
+backend, and managed PostgreSQL database.
+
 ## Overview
 
 Smart Campus connects academic administration, enrollment, teaching, and grading
@@ -16,7 +23,7 @@ in course offerings, and assigned professors manage rosters and grades.
 - PostgreSQL relational model and a documented REST API.
 - Responsive React interface with role-aware navigation and protected routes.
 - Docker Compose environment with nginx, database persistence, and SQL migrations.
-- Automated backend tests covering authentication, authorization, and academic workflows.
+- Automated pytest and Playwright coverage for authentication, authorization, role protection, and the full academic workflow.
 
 ## Role-Based Workflows
 
@@ -75,7 +82,7 @@ Startup order: **database healthy → migrations successful → backend healthy 
 | Authentication | JWT, Argon2 password hashing, role-based authorization |
 | Frontend | React, TypeScript, Vite, React Router, Axios, CSS |
 | Runtime | Docker Compose, nginx |
-| Testing | pytest; SQLite in-memory databases for automated backend tests |
+| Testing | pytest, Playwright; SQLite in-memory backend tests and Docker-based browser E2E tests |
 
 ## Project Structure
 
