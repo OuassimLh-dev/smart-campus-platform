@@ -1,16 +1,17 @@
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, CheckConstraint, DateTime, ForeignKey, String, UniqueConstraint, func, true
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy import Boolean, CheckConstraint, DateTime, ForeignKey, String, UniqueConstraint, func, select, true
+from sqlalchemy.orm import Mapped, column_property, mapped_column, relationship
 
 from app.db.base import Base
+from app.models.professor_profile import ProfessorProfile
+from app.models.user import User
 
 if TYPE_CHECKING:
     from app.models.academic_term import AcademicTerm
     from app.models.course import Course
     from app.models.enrollment import Enrollment
-    from app.models.professor_profile import ProfessorProfile
 
 
 class CourseOffering(Base):
@@ -24,6 +25,14 @@ class CourseOffering(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     course_id: Mapped[int] = mapped_column(ForeignKey("courses.id"), index=True)
     professor_id: Mapped[int] = mapped_column(ForeignKey("professor_profiles.id"), index=True)
+    # Read-only identity projection: loaded in the offering query, not one query per row.
+    professor_name: Mapped[str | None] = column_property(
+        select(User.first_name + " " + User.last_name)
+        .join(ProfessorProfile, ProfessorProfile.user_id == User.id)
+        .where(ProfessorProfile.id == professor_id)
+        .correlate_except(User, ProfessorProfile)
+        .scalar_subquery()
+    )
     term_id: Mapped[int] = mapped_column(ForeignKey("academic_terms.id"), index=True)
     section: Mapped[str] = mapped_column(String(50))
     capacity: Mapped[int]

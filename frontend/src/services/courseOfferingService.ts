@@ -1,5 +1,5 @@
 import { api } from '../api/client'
-import type { AcademicTerm, Course, CourseOffering, OfferingDetails, ProfessorPublic } from '../types/courseOffering'
+import type { AcademicTerm, Course, CourseOffering, OfferingDetails } from '../types/courseOffering'
 
 export const courseOfferingService = {
   async list(skip: number, onlyOpen: boolean, signal?: AbortSignal) {
@@ -19,14 +19,13 @@ export const courseOfferingService = {
       }))
       return new Map(entries.filter((entry): entry is readonly [number, T] => entry[1] !== undefined))
     }
-    const [courses, terms, professors] = await Promise.all([
+    const [courses, terms] = await Promise.all([
       lookup<Course>(offerings.map(o => o.course_id), '/courses'),
       lookup<AcademicTerm>(offerings.map(o => o.term_id), '/terms'),
-      lookup<ProfessorPublic>(offerings.map(o => o.professor_id), '/professors'),
     ])
     return offerings.map(offering => ({
       offering, course: courses.get(offering.course_id),
-      term: terms.get(offering.term_id), professor: professors.get(offering.professor_id),
+      term: terms.get(offering.term_id),
     }))
   },
 }

@@ -132,3 +132,63 @@ def test_default_and_maximum_page_size(client, academic_setup, db_session):
     for url in (TERMS, OFFERINGS):
         assert len(client.get(url, headers=setup["admin_headers"]).json()) == 20
         assert len(client.get(url, headers=setup["admin_headers"], params={"limit": 100}).json()) == 23
+
+
+@pytest.mark.parametrize("actor", ["student_headers", "professor_headers", "admin_headers"])
+def test_offering_professor_name_comes_from_assigned_user(client, academic_setup, db_session, actor):
+    setup = academic_setup
+    professor = setup["professor"].user
+    professor.first_name, professor.last_name = "Sara", "Demo"
+    other = setup["other_professor"].user
+    other.first_name, other.last_name = "Omar", "Hassan"
+    db_session.commit()
+    headers = setup[actor]
+    # The course professor differs from the offering professor deliberately.
+    for record in [client.get(OFFERINGS, headers=headers).json()[0],
+                   client.get(f"{OFFERINGS}/{setup['offering'].id}", headers=headers).json()]:
+        assert record["professor_name"] == "Sara Demo"
+        assert not {"email", "hashed_password", "user"} & record.keys()
+    professor.first_name = "Sarah"
+    db_session.commit()
+    assert client.get(f"{OFFERINGS}/{setup['offering'].id}", headers=headers).json()["professor_name"] == "Sarah Demo"
+
+
+def test_offering_writes_return_current_professor_name(client, academic_setup, db_session):
+    setup = academic_setup
+    setup["professor"].user.first_name = "Sara"
+    setup["professor"].user.last_name = "Demo"
+    setup["other_professor"].user.first_name = "Omar"
+    setup["other_professor"].user.last_name = "Hassan"
+    db_session.commit()
+    response = client.post(OFFERINGS, headers=setup["admin_headers"], json=offering_payload(setup))
+    assert response.status_code == 201
+    assert response.json()["professor_name"] == "Sara Demo"
+    response = client.patch(f"{OFFERINGS}/{response.json()['id']}", headers=setup["admin_headers"],
+                            json={"professor_id": setup["other_professor"].id})
+    assert response.status_code == 200
+    assert response.json()["professor_name"] == "Omar Hassan"
+
+
+def test_offering_names_do_not_add_per_row_queries(academic_setup, db_session):
+    from sqlalchemy import event
+    from app.services.course_offering import list_offerings
+    from app.schemas.course_offering import CourseOfferingRead
+
+    setup = academic_setup
+    for index in range(5):
+        db_session.add(CourseOffering(course_id=setup["course"].id, professor_id=setup["professor"].id,
+                                     term_id=setup["term"].id, section=f"Extra {index}", capacity=10))
+    db_session.commit()
+    db_session.expunge_all()
+    statements = []
+    def capture(*args):
+        statements.append(args[2])
+    engine = db_session.get_bind()
+    event.listen(engine, "before_cursor_execute", capture)
+    try:
+        records = [CourseOfferingRead.model_validate(row) for row in list_offerings(db_session)]
+        assert len(records) == 6
+        assert all(record.professor_name == "Test Actor" for record in records)
+        assert len(statements) == 1
+    finally:
+        event.remove(engine, "before_cursor_execute", capture)

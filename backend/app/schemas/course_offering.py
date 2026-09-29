@@ -33,5 +33,6 @@ class CourseOfferingUpdate(AcademicUpdate):
 class CourseOfferingRead(CourseOfferingCreate):
     model_config = ConfigDict(from_attributes=True)
     id: int
+    professor_name: str | None
     created_at: datetime
     updated_at: datetime

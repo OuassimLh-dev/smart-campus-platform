@@ -2,6 +2,7 @@ export interface CourseOffering {
   id: number
   course_id: number
   professor_id: number
+  professor_name: string | null
   term_id: number
   section: string
   capacity: number
@@ -20,13 +21,8 @@ export interface AcademicTerm {
   name: string
   academic_year: string
 }
-export interface ProfessorPublic {
-  id: number
-  academic_title: string
-}
 export interface OfferingDetails {
   offering: CourseOffering
   course?: Course
   term?: AcademicTerm
-  professor?: ProfessorPublic
 }
