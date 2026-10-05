@@ -254,11 +254,12 @@ Newer runs for the same ref cancel older in-progress runs.
 
 ## Deployment: Railway
 
-Deployment support is prepared; this repository does not imply a live Railway
-deployment. Use three services in the same Railway project/environment:
-`frontend`, `backend`, and `Postgres`. Only `frontend` needs a public domain.
-Keep backend networking private and do not enable a public PostgreSQL TCP proxy.
-The browser calls same-origin `/api/v1`; nginx alone resolves the private backend.
+The production application is live on Railway at
+https://frontend-production-8606.up.railway.app. The deployment uses three
+services in the same Railway project/environment: `frontend`, `backend`, and
+`Postgres`. Only `frontend` needs a public domain. Backend networking remains
+private, and PostgreSQL is not exposed through a public TCP proxy. The browser
+calls same-origin `/api/v1`; nginx resolves the private backend.
 
 New Railway services must configure these settings manually in the service
 dashboard. Connect this repository separately for each application service:
