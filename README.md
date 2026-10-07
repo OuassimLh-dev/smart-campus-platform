@@ -1,5 +1,7 @@
 # Smart Campus Management Platform
 
+[![CI](https://github.com/OuassimLh-dev/smart-campus-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/OuassimLh-dev/smart-campus-platform/actions/workflows/ci.yml)
+
 A full-stack academic management platform with role-based workflows for students,
 professors, and administrators. Built as a software engineering portfolio project
 using FastAPI, PostgreSQL, and React.
