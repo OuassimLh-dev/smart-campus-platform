@@ -86,6 +86,9 @@ test('admin setup → student enrollment → professor grading → student resul
     await expect(offering.getByText('Open', { exact: true })).toBeVisible()
     await offering.getByRole('button', { name: 'Enroll', exact: true }).click()
     await expect(page.getByRole('status')).toContainText('Enrollment successful.')
+    await expect(offering.getByRole('button', { name: 'Enrolled', exact: true })).toBeDisabled()
+    await page.reload()
+    await expect(offering.getByRole('button', { name: 'Enrolled', exact: true })).toBeDisabled()
     await navigate('Enrollments')
     await expect(page.getByRole('heading', { name: 'My enrollments', exact: true })).toBeVisible()
     const enrollment = page.getByRole('article').filter({ hasText: course })
@@ -123,5 +126,10 @@ test('admin setup → student enrollment → professor grading → student resul
     for (const value of ['E2E Fall 2026-2027', 'A', 'Grade: 93.5 / 100', feedback, 'Completed']) {
       await expect(result.getByText(value, { exact: true })).toBeVisible()
     }
+    await navigate('Courses')
+    const completed = page.getByRole('article').filter({ has: page.getByRole('heading', { name: course, exact: true }) })
+    await expect(completed.getByRole('button', { name: 'Previously enrolled', exact: true })).toBeDisabled()
+    await page.reload()
+    await expect(completed.getByRole('button', { name: 'Previously enrolled', exact: true })).toBeDisabled()
   })
 })

@@ -342,7 +342,9 @@ and [pre-deploy commands](https://docs.railway.com/deployments/pre-deploy-comman
 
 Playwright verifies real login, role navigation, route protection, and basic page
 loading through the Docker nginx frontend at `http://localhost:8080`. Chromium
-is the only browser. No APIs are mocked.
+is the only browser. Authentication and the academic workflow use the real API.
+Catalog regression tests run in the same suite with API fixtures for enrollment
+history, pagination, missing profiles, and lookup failure/retry.
 
 From the repository root (Node 22.12+ and Docker Compose 2.24.4+):
 
