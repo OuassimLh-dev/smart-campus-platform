@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { AdminForm } from '../components/AdminForm'
 import { LoadError } from '../components/StudentWorkflow'
 import { useResource } from '../hooks/useResource'
@@ -11,9 +11,14 @@ import { apiError } from '../utils/apiError'
 export function AdminManagementPage({ kind }: { kind: AdminKind }) {
   const { user, logout } = useAuth()
   const [skip, setSkip] = useState(0)
+  const checkPageAfterDeactivation = useRef(false)
   const [filters, setFilters] = useState<Filters>({})
   const resource = useResource(useCallback(async (signal: AbortSignal) => {
     const [records, options] = await Promise.all([adminService.list(kind, skip, filters, signal), adminOptions(kind, signal)])
+    if (!signal.aborted && checkPageAfterDeactivation.current) {
+      checkPageAfterDeactivation.current = false
+      if (!records.length && skip > 0) setSkip(skip - 20)
+    }
     return { records, options }
   }, [kind, skip, filters]))
   const [editing, setEditing] = useState<AdminRecord | null | undefined>(undefined)
@@ -29,6 +34,7 @@ export function AdminManagementPage({ kind }: { kind: AdminKind }) {
     try {
       await adminService.deactivate(kind, confirm.id)
       if (kind === 'users' && confirm.id === user?.id) { logout(); return }
+      checkPageAfterDeactivation.current = true
       refresh('Record deactivated. The database record has been retained.')
     } catch (cause) { setError(apiError(cause)) }
     finally { setBusy(false) }
